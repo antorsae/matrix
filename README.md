@@ -2,7 +2,18 @@
 
 A Matrix movie-style terminal animation written in Python.
 
-![Matrix Rain Demo](demo.gif)
+```
+    ア  7    ム    )   ヨ  $      コ   ワ        ネ
+    シ  M    ヌ    L   3   @      テ   ヲ        ホ
+   ウ  セ  P   ヘ   ネ  /   タ   =   ト   ン        ミ
+   エ  ソ  Q   ホ   ノ  [   チ   +   ナ   0         ム
+  オ  タ  R   マ   ハ  ]   ツ   _   ニ   1          メ
+ カ  チ  S   ミ   ヒ  {   テ   <   ヌ   2           モ
+ キ  ツ  T   ム   フ  }   ト   >   ネ   3            ヤ
+ク  テ  U   メ   ヘ  |   ナ   ?   ノ   4             ユ
+```
+
+> Run `python matrix.py` to see the full animated effect!
 
 ## Features
 

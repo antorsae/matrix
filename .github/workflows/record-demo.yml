@@ -1,62 +1,18 @@
+# Demo recording workflow - disabled due to CI complexity
+# To update the demo.gif, record locally using:
+#   asciinema rec -c "python matrix.py" demo.cast
+#   agg demo.cast demo.gif
+# Or use VHS locally:
+#   vhs demo.tape
+# Then commit the demo.gif manually.
+
 name: Record Demo GIF
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'matrix.py'
-    branches:
-      - main
 
 jobs:
-  record:
-    # Prevent infinite loop - skip if commit was made by this action
-    if: "!contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, 'Update demo.gif')"
+  placeholder:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y xvfb xterm ffmpeg gifsicle ncurses-term fonts-noto-cjk
-
-      - name: Record demo GIF (headless X)
-        run: |
-          cat > record.sh <<'SCRIPT'
-          set -euo pipefail
-
-          # Start xterm running the matrix animation
-          xterm -geometry 100x30 -fa 'Noto Sans Mono CJK JP' -fs 14 \
-            -bg black -fg white \
-            -e "bash -lc 'export TERM=xterm-256color; timeout -s INT 6s python matrix.py || true'" &
-          term_pid=$!
-
-          # Wait for xterm to start
-          sleep 1
-
-          # Record with ffmpeg
-          ffmpeg -y -video_size 800x480 -framerate 30 -f x11grab -i "${DISPLAY}.0" -t 5 \
-            -vf "fps=15,scale=640:-1:flags=lanczos" demo.gif
-
-          wait $term_pid || true
-          SCRIPT
-
-          xvfb-run -a -s "-screen 0 800x480x24" bash record.sh
-
-      - name: Optimize GIF
-        run: gifsicle -O3 --colors 128 -o demo.gif demo.gif
-
-      - name: Commit demo.gif
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add demo.gif
-          git diff --staged --quiet || git commit -m "Update demo.gif [skip ci]"
-          git push
+      - run: echo "Demo recording requires local execution. See workflow comments."
