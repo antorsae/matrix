@@ -22,32 +22,31 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
+      - name: Install VHS
+        uses: charmbracelet/vhs-action@v2
+
+      - name: Create VHS tape
+        run: |
+          cat > demo.tape << 'EOF'
+          Set Shell bash
+          Set FontSize 14
+          Set Width 800
+          Set Height 400
+          Set Theme "Monokai"
+
+          Type "python matrix.py"
+          Enter
+          Sleep 5s
+          Ctrl+C
+          EOF
+
+      - name: Record demo
+        run: vhs demo.tape -o demo.gif
+
+      - name: Optimize GIF
         run: |
           sudo apt-get update
-          sudo apt-get install -y asciinema gifsicle
-
-          # Download agg (asciinema gif generator) from GitHub releases
-          wget -q https://github.com/asciinema/agg/releases/download/v1.5.0/agg-x86_64-unknown-linux-gnu -O agg
-          chmod +x agg
-          sudo mv agg /usr/local/bin/
-
-      - name: Record terminal session
-        run: |
-          # Set terminal size and colors
-          export TERM=xterm-256color
-          export COLUMNS=80
-          export LINES=24
-
-          # Record with asciinema (5 seconds)
-          timeout 5s asciinema rec --cols 80 --rows 24 -c "python matrix.py" demo.cast || true
-
-      - name: Convert to GIF
-        run: |
-          # Convert cast to gif using agg
-          agg --cols 80 --rows 24 --speed 1 --theme monokai demo.cast demo.gif
-
-          # Optimize GIF size
+          sudo apt-get install -y gifsicle
           gifsicle -O3 --colors 128 demo.gif -o demo.gif
 
       - name: Commit demo.gif
