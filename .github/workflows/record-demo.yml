@@ -25,34 +25,33 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg gifsicle ttyd
+          sudo apt-get install -y xvfb xterm ffmpeg gifsicle ncurses-term fonts-noto-cjk
 
-          # Install VHS directly from releases
-          VHS_VERSION="0.8.0"
-          wget -q "https://github.com/charmbracelet/vhs/releases/download/v${VHS_VERSION}/vhs_${VHS_VERSION}_linux_amd64.deb" -O vhs.deb
-          sudo dpkg -i vhs.deb
-
-      - name: Create VHS tape
+      - name: Record demo GIF (headless X)
         run: |
-          cat > demo.tape << 'EOF'
-          Set Shell bash
-          Set FontSize 14
-          Set Width 800
-          Set Height 400
-          Set Theme "Monokai"
-          Set TypingSpeed 50ms
+          cat > record.sh <<'SCRIPT'
+          set -euo pipefail
 
-          Type "python matrix.py"
-          Enter
-          Sleep 5s
-          Ctrl+C
-          EOF
+          # Start xterm running the matrix animation
+          xterm -geometry 100x30 -fa 'Noto Sans Mono CJK JP' -fs 14 \
+            -bg black -fg white \
+            -e "bash -lc 'export TERM=xterm-256color; timeout -s INT 6s python matrix.py || true'" &
+          term_pid=$!
 
-      - name: Record demo
-        run: vhs demo.tape -o demo.gif
+          # Wait for xterm to start
+          sleep 1
+
+          # Record with ffmpeg
+          ffmpeg -y -video_size 800x480 -framerate 30 -f x11grab -i "${DISPLAY}.0" -t 5 \
+            -vf "fps=15,scale=640:-1:flags=lanczos" demo.gif
+
+          wait $term_pid || true
+          SCRIPT
+
+          xvfb-run -a -s "-screen 0 800x480x24" bash record.sh
 
       - name: Optimize GIF
-        run: gifsicle -O3 --colors 128 demo.gif -o demo.gif
+        run: gifsicle -O3 --colors 128 -o demo.gif demo.gif
 
       - name: Commit demo.gif
         run: |
