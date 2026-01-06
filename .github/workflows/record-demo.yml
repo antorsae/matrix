@@ -22,8 +22,15 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install ffmpeg first
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg gifsicle
+
       - name: Install VHS
         uses: charmbracelet/vhs-action@v2
+        with:
+          install-fonts: true
 
       - name: Create VHS tape
         run: |
@@ -33,6 +40,7 @@ jobs:
           Set Width 800
           Set Height 400
           Set Theme "Monokai"
+          Set TypingSpeed 50ms
 
           Type "python matrix.py"
           Enter
@@ -44,10 +52,7 @@ jobs:
         run: vhs demo.tape -o demo.gif
 
       - name: Optimize GIF
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gifsicle
-          gifsicle -O3 --colors 128 demo.gif -o demo.gif
+        run: gifsicle -O3 --colors 128 demo.gif -o demo.gif
 
       - name: Commit demo.gif
         run: |
