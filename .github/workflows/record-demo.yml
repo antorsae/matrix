@@ -1,0 +1,53 @@
+name: Record Demo GIF
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'matrix.py'
+    branches:
+      - main
+
+jobs:
+  record:
+    # Prevent infinite loop - skip if commit was made by this action
+    if: "!contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, 'Update demo.gif')"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y asciinema gifsicle
+          pip install agg
+
+      - name: Record terminal session
+        run: |
+          # Set terminal size
+          export TERM=xterm-256color
+
+          # Record with asciinema (5 seconds)
+          timeout 5s asciinema rec --cols 80 --rows 24 -c "python matrix.py" demo.cast || true
+
+      - name: Convert to GIF
+        run: |
+          # Convert cast to gif using agg (asciinema gif generator)
+          agg --cols 80 --rows 24 --speed 1 demo.cast demo.gif
+
+          # Optimize GIF size
+          gifsicle -O3 --colors 64 demo.gif -o demo.gif
+
+      - name: Commit demo.gif
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add demo.gif
+          git diff --staged --quiet || git commit -m "Update demo.gif [skip ci]"
+          git push
