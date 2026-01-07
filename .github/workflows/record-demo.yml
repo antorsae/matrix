@@ -1,18 +1,113 @@
-# Demo recording workflow - disabled due to CI complexity
-# To update the demo.gif, record locally using:
-#   asciinema rec -c "python matrix.py" demo.cast
-#   agg demo.cast demo.gif
-# Or use VHS locally:
-#   vhs demo.tape
-# Then commit the demo.gif manually.
-
-name: Record Demo GIF
+name: Generate Demo GIF
 
 on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'matrix.py'
+      - '.github/workflows/record-demo.yml'
   workflow_dispatch:
 
+# Prevent concurrent runs from racing on push
+concurrency:
+  group: demo-gif
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
 jobs:
-  placeholder:
+  generate-gif:
     runs-on: ubuntu-latest
+
     steps:
-      - run: echo "Demo recording requires local execution. See workflow comments."
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg ttyd fonts-noto-cjk
+
+    - name: Install VHS
+      run: |
+        VHS_VERSION="0.7.1"
+        curl -fsSL "https://github.com/charmbracelet/vhs/releases/download/v${VHS_VERSION}/vhs_${VHS_VERSION}_Linux_x86_64.tar.gz" -o vhs.tar.gz
+        tar xzf vhs.tar.gz
+        sudo mv vhs /usr/local/bin/
+        rm vhs.tar.gz
+
+    - name: Create VHS tape file
+      run: |
+        cat > demo.tape << 'TAPE'
+        # VHS tape for Matrix Rain demo
+        Output demo.gif
+        Set FontFamily "Noto Sans Mono CJK JP"
+        Set FontSize 14
+        Set Width 800
+        Set Height 500
+        Set Framerate 30
+        Set Theme "Monokai"
+
+        # Run matrix animation for 60 seconds
+        Type "python matrix.py"
+        Enter
+
+        # Let it run for 60 seconds
+        Sleep 60s
+
+        # Send Ctrl+C to exit
+        Ctrl+C
+        Sleep 1s
+        TAPE
+
+    - name: Generate GIF
+      run: |
+        rm -f demo.gif
+        set +e
+        timeout 120 vhs demo.tape
+        VHS_EXIT=$?
+        set -e
+        if [ $VHS_EXIT -eq 124 ]; then
+          echo "ERROR: VHS timed out"
+          exit 1
+        elif [ $VHS_EXIT -ne 0 ]; then
+          echo "ERROR: VHS failed with exit code $VHS_EXIT"
+          exit 1
+        fi
+        if [ ! -f demo.gif ]; then
+          echo "ERROR: GIF was not generated"
+          exit 1
+        fi
+        ls -la demo.gif
+      timeout-minutes: 5
+
+    - name: Optimize GIF
+      run: |
+        if [ -f demo.gif ]; then
+          echo "Original GIF info:"
+          ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1 demo.gif || true
+          ls -la demo.gif
+          # Optimize GIF size
+          ffmpeg -i demo.gif -vf "fps=15,scale=640:-1:flags=lanczos" -y demo_opt.gif || true
+          if [ -f demo_opt.gif ]; then
+            mv demo_opt.gif demo.gif
+            echo "Optimized GIF info:"
+            ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1 demo.gif || true
+          fi
+          ls -la demo.gif
+        fi
+
+    - name: Commit and push GIF
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git add demo.gif
+        git diff --staged --quiet || git commit -m "Update demo GIF"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
