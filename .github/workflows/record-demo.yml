@@ -2,7 +2,7 @@ name: Generate Demo GIF
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, claude/convert-to-rust-tphwM ]
     paths:
       - 'src/**'
       - 'Cargo.toml'
