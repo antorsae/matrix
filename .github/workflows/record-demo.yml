@@ -4,7 +4,9 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'matrix.py'
+      - 'src/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
       - '.github/workflows/record-demo.yml'
   workflow_dispatch:
 
@@ -23,10 +25,14 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
+    - name: Install Rust
+      uses: dtolnay/rust-action@stable
+
+    - name: Cache Rust dependencies
+      uses: Swatinem/rust-cache@v2
+
+    - name: Build release binary
+      run: cargo build --release
 
     - name: Install dependencies
       run: |
@@ -54,7 +60,7 @@ jobs:
         Set Theme "Molokai"
 
         # Run matrix animation for 60 seconds
-        Type "python matrix.py"
+        Type "./target/release/matrix"
         Enter
 
         # Let it run for 60 seconds

@@ -1,4 +1,11 @@
+# Rust
+/target/
+Cargo.lock
+
+# Python (legacy)
 __pycache__/
 *.pyc
+
+# Misc
 .agent-collab/
 *.cast

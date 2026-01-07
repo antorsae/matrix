@@ -1,6 +1,6 @@
 # Matrix Rain CLI
 
-A Matrix movie-style terminal animation written in Python.
+A Matrix movie-style terminal animation written in Rust.
 
 ![Matrix Rain Demo](demo.gif)
 
@@ -11,21 +11,35 @@ A Matrix movie-style terminal animation written in Python.
 - 3 speed tiers for depth perception (foreground/background effect)
 - Smooth 30 FPS animation with delta-time movement
 - Differential rendering for performance
-- Graceful fallback to 8-color terminals
+- Cross-platform support (Windows, macOS, Linux)
+
+## Installation
+
+### From source
+
+```bash
+cargo build --release
+./target/release/matrix
+```
+
+### Run directly
+
+```bash
+cargo run --release
+```
 
 ## Usage
 
 ```bash
-python matrix.py
+./matrix
 ```
 
-Press `q` or `Ctrl+C` to exit.
+Press `q`, `Esc`, or `Ctrl+C` to exit.
 
 ## Requirements
 
-- Python 3.7+
-- A terminal with color support (256-color recommended)
-- Unix/Linux/macOS (Windows requires `windows-curses`)
+- A terminal with color support (256-color or true color recommended)
+- Minimum terminal size: 20x10
 
 ---
 
@@ -73,37 +87,12 @@ This resulted in **6 rounds of detailed questions** covering:
 
 The interview transformed a vague one-liner into a [detailed 200-line technical specification](SPEC.md).
 
-### Step 3: Dual-Agent Implementation
+### Step 3: Implementation & Rust Rewrite
 
-Using [dual-agent](https://github.com/antorsae/dual-agent), two AI agents collaborated:
-
-#### Claude (Implementation Agent)
-- Designed the architecture (Column dataclass + MatrixRain controller)
-- Wrote the complete implementation (~300 lines)
-- Implemented differential rendering algorithm
-- Set up curses with 256-color support
-- Added frame pacing and delta-time movement
-
-#### Codex (Review Agent)
-Claude delegated code review to Codex, which identified:
-
-| Severity | Issue | Fix Applied |
-|----------|-------|-------------|
-| **High** | 256-color indices may fail on non-256-color terminals | Added `curses.COLORS` check with 8-color fallback |
-| **Medium** | Need locale init for Katakana rendering | Added `locale.setlocale(locale.LC_ALL, "")` |
-| **Medium** | Should guard color setup | Added `curses.has_colors()` check |
-| **Low** | `curs_set(0)` may fail on some terminals | Wrapped in try/except |
-| ✓ Pass | Dataclass mutable defaults | Correctly uses `default_factory` |
-
-### The Result
-
-From a one-line spec to a production-quality terminal animation with:
-- Proper error handling
-- Cross-terminal compatibility
-- Performance optimizations
-- Clean architecture
-
-All through AI-assisted development with human guidance on design decisions.
+The project was initially implemented in Python, then rewritten in Rust for:
+- Better performance (native binary)
+- Cross-platform support via crossterm
+- No runtime dependencies
 
 ---
 
@@ -114,11 +103,11 @@ See [SPEC.md](SPEC.md) for the complete technical specification generated throug
 ### Architecture
 
 ```
-matrix.py
+src/main.rs
 ├── Constants (CHAR_SET, SPEED_TIERS, colors, timing)
-├── @dataclass Column (rain column state + movement)
-├── class MatrixRain (main controller + rendering)
-└── main() with signal handling
+├── struct Column (rain column state + movement)
+├── struct MatrixRain (main controller + rendering)
+└── main() with terminal setup/cleanup
 ```
 
 ### Key Algorithms
@@ -126,6 +115,11 @@ matrix.py
 - **Movement**: `y_head += speed * delta_time` (frame-rate independent)
 - **Differential rendering**: Only update cells that changed between frames
 - **Color gradient**: Position-based color assignment (head=white, trail=green gradient)
+
+### Dependencies
+
+- `crossterm` - Cross-platform terminal manipulation
+- `rand` - Random number generation
 
 ## License
 

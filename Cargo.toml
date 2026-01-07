@@ -1,0 +1,17 @@
+[package]
+name = "matrix"
+version = "1.0.0"
+edition = "2021"
+description = "Matrix-style terminal rain animation"
+license = "MIT"
+authors = ["Matrix Rain CLI"]
+
+[dependencies]
+crossterm = "0.27"
+rand = "0.8"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
