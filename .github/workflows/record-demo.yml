@@ -51,7 +51,7 @@ jobs:
         Set Width 800
         Set Height 500
         Set Framerate 30
-        Set Theme "Monokai"
+        Set Theme "Molokai"
 
         # Run matrix animation for 60 seconds
         Type "python matrix.py"
