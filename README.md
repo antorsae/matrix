@@ -52,8 +52,10 @@ This project demonstrates **AI-assisted development** using Claude Code with the
 The entire project started with this one-line spec in `SPEC.md`:
 
 ```
-Write a python program CLI that outputs to the terminal a MATRIX MOVIE LIKE animation (green stuff)
+Write a CLI program that outputs to the terminal a MATRIX MOVIE LIKE animation (green stuff)
 ```
+
+*(Originally prototyped in Python, later rewritten in Rust for performance)*
 
 ### Step 2: AI Interview Process
 
